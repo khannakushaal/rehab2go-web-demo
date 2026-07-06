@@ -670,7 +670,7 @@ document.body.innerHTML = document.body.innerHTML
   .replaceAll('%IC_GOOGLE%',I.google).replaceAll('%IC_APPLE%',I.apple).replaceAll('%IC_LOGOUT%',I.logout).replaceAll('%LOGO_NAVY%',LOGO_NAVY).replaceAll('%LOGO_WHITE%',LOGO_WHITE).replaceAll('%LOGIN_HERO%',LOGIN_HERO).replaceAll('%IC_CARET%',I.caret).replaceAll('%IC_MENU%',I.menu);
 
 /* ---------------- State ---------------- */
-const state={role:'patient',view:'home',bStep:1,bData:{},oStep:1};
+const state={role:'patient',view:'home',bStep:1,bData:{},oStep:1,apptId:'ak'};
 const el=id=>document.getElementById(id);
 const $=(s,r=document)=>r.querySelector(s);
 
@@ -836,12 +836,12 @@ const PV={
     <div class="page-head"><div><h1>My appointments</h1><p>Upcoming and past visits.</p></div>
       <button class="btn btn-primary" data-view="book">${ic('plus')} New booking</button></div>
     <div class="card"><div class="card-hd"><h3>Upcoming</h3><span class="tag blue">2 scheduled</span></div>
-      ${apptRow('AK','Dr. A. Kaur','Physiotherapy · In-home','Wed, 2:00 PM','green','Confirmed')}
-      ${apptRow('MR','Dr. M. Rossi','Psychotherapy · Virtual','Fri, 11:00 AM','amber','Pending')}
+      ${apptRow('ak','AK','Dr. A. Kaur','Physiotherapy · In-home','Wed, 2:00 PM','green','Confirmed')}
+      ${apptRow('mr','MR','Dr. M. Rossi','Psychotherapy · Virtual','Fri, 11:00 AM','amber','Pending')}
     </div>
     <div class="card" style="margin-top:18px"><div class="card-hd"><h3>Past</h3><span class="link" data-toast="Full history would load">View all</span></div>
-      ${apptRow('JD','J. Doe, RMT','Massage therapy · In-home','Jun 28','grey','Completed')}
-      ${apptRow('AK','Dr. A. Kaur','Physiotherapy · In-home','Jun 14','grey','Completed')}
+      ${apptRow('jd','JD','J. Doe, RMT','Massage therapy · In-home','Jun 28','grey','Completed')}
+      ${apptRow('ak2','AK','Dr. A. Kaur','Physiotherapy · In-home','Jun 14','grey','Completed')}
     </div>`,
   virtual:()=>`
     <div class="page-head"><div><h1>Virtual visit</h1><p>Secure video consultation room.</p></div></div>
@@ -881,6 +881,48 @@ const PV={
       </div>
     </div>`,
   messages:()=>messagingView('patient'),
+  apptdetail:()=>{
+    const a=APPTS[state.apptId]||APPTS.ak;
+    const home=a.delivery==='home';
+    const fn=a.name.replace('Dr. ','').split(' ')[0];
+    return `
+    <div class="page-head"><div><h1>Appointment details</h1><p>${a.service} · ${home?'In-home visit':'Virtual visit'}</p></div>
+      <button class="btn btn-ghost" data-view="appts">Back to appointments</button></div>
+    <div class="card card-p" style="margin-bottom:18px">
+      <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">
+        <div class="avatar" style="width:60px;height:60px;font-size:20px">${a.av}</div>
+        <div style="flex:1;min-width:180px">
+          <h2 style="font-size:20px">${a.name}</h2>
+          <div class="muted" style="font-size:13.5px">${a.service} · ${a.role}</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">${tag(a.cls,a.status,a.cls==='green'?'check':'')}${tag(home?'green':'blue',home?'In-home':'Virtual',home?'pin':'video')}${a.location?tag('grey',a.location):''}</div>
+        </div>
+        <div style="text-align:right"><div class="muted" style="font-size:12px">Scheduled</div><div style="font-family:var(--display);font-weight:800;font-size:18px">${a.when}</div></div>
+      </div>
+    </div>
+    <div class="split">
+      <div class="card">
+        <div class="card-hd"><h3>${home?'Location & route':'Video consultation'}</h3>${home?`<button class="btn btn-primary btn-sm" data-view="track">${ic('pin')} Track provider</button>`:''}</div>
+        ${home?`<div class="map-wrap" style="border:none;border-radius:0"><div class="map-eta"><div class="e-ico">${ic('pin')}</div><div><b>${a.location}</b><small>${a.address}</small></div></div>${apptDetailMap()}<div class="map-legend"><div class="ml"><span class="md" style="background:#2C6C97"></span>Provider</div><div class="ml"><span class="md" style="background:#1B4174"></span>Your home</div></div></div>`
+        :`<div class="card-p"><div style="aspect-ratio:16/9;background:linear-gradient(135deg,#14335C,#2C6C97);border-radius:12px;display:grid;place-items:center;color:#fff;text-align:center"><div><div class="avatar" style="width:64px;height:64px;font-size:22px;margin:0 auto 10px;background:rgba(255,255,255,.2);color:#fff">${a.av}</div><b>${a.name}</b><div style="opacity:.85;font-size:13px;margin-top:4px">Room opens 5 min before your visit</div></div></div><button class="btn btn-primary btn-block" data-view="virtual" style="margin-top:14px">${ic('video')} Join virtual room</button></div>`}
+      </div>
+      <div class="card card-p">
+        <h3 style="font-size:15px;margin-bottom:12px">Visit details</h3>
+        ${confRow('Service',a.service)}
+        ${confRow('Provider',a.name)}
+        ${confRow('Date & time',a.when)}
+        ${confRow('Delivery',home?'In-home':'Virtual video')}
+        ${confRow(home?'Address':'Platform',home?a.address:'Rehab2Go video')}
+        ${confRow('Status',a.status)}
+        <div class="divider"></div>
+        ${confRow('Visit fee',a.fee)}
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:16px">
+          <button class="btn btn-ghost btn-block" data-view="messages">${ic('chat')} Message ${fn}</button>
+          <button class="btn btn-ghost btn-block" data-toast="Reschedule flow would open">Reschedule</button>
+          <button class="btn btn-danger btn-block" data-modal="cancelappt">Cancel appointment</button>
+        </div>
+      </div>
+    </div>`;
+  },
   track:()=>`
     <div class="page-head"><div><h1>Track your provider</h1><p>Dr. A. Kaur is on the way to your home.</p></div>
       <button class="btn btn-ghost" data-view="home">Back</button></div>
@@ -966,7 +1008,16 @@ const careArt=`<svg viewBox="0 0 210 150" fill="none" xmlns="http://www.w3.org/2
   <path d="M56 103h28M56 108h20" stroke="#2C6C97" stroke-width="2" stroke-linecap="round"/>
   <circle cx="70" cy="46" r="7" fill="#EAF1F8"/>
 </svg>`;
-function apptRow(av,name,sub,when,cls,st){return `<div class="row-item"><div class="avatar">${av}</div><div class="body"><b>${name}</b><p>${sub}</p></div><div style="text-align:right"><div style="font-weight:600;font-size:13.5px">${when}</div>${tag(cls,st)}</div><div class="r-actions"><button class="btn btn-ghost btn-sm" data-toast="Details opened">View</button></div></div>`}
+function apptRow(id,av,name,sub,when,cls,st){return `<div class="row-item" data-appt="${id}"><div class="avatar">${av}</div><div class="body"><b>${name}</b><p>${sub}</p></div><div style="text-align:right"><div style="font-weight:600;font-size:13.5px">${when}</div>${tag(cls,st)}</div><div class="r-actions"><button class="btn btn-ghost btn-sm" data-appt="${id}">View</button></div></div>`}
+const APPTS={
+  ak:{av:'AK',name:'Dr. A. Kaur',role:'Physiotherapist · 4.9 ★',service:'Physiotherapy',delivery:'home',when:'Wed, May 28 · 2:00 PM',location:'North York',address:'123 Main St, North York, ON',cls:'green',status:'Confirmed',fee:'$150.00'},
+  mr:{av:'MR',name:'Dr. M. Rossi',role:'Psychotherapist · 4.8 ★',service:'Psychotherapy',delivery:'virtual',when:'Fri, May 30 · 11:00 AM',location:'',address:'',cls:'amber',status:'Pending',fee:'$150.00'},
+  jd:{av:'JD',name:'J. Doe, RMT',role:'Registered massage therapist',service:'Massage therapy',delivery:'home',when:'Jun 28 · 10:00 AM',location:'North York',address:'123 Main St, North York, ON',cls:'grey',status:'Completed',fee:'$140.00'},
+  ak2:{av:'AK',name:'Dr. A. Kaur',role:'Physiotherapist · 4.9 ★',service:'Physiotherapy',delivery:'home',when:'Jun 14 · 2:00 PM',location:'North York',address:'123 Main St, North York, ON',cls:'grey',status:'Completed',fee:'$150.00'},
+};
+function apptDetailMap(){return `<svg class="map-svg" viewBox="0 0 480 320">${mapBase()}
+  <path d="M120 88 L120 150 L308 150 L308 230" fill="none" stroke="#1B4174" stroke-width="4" stroke-dasharray="2 9" opacity=".55" stroke-linecap="round"/>
+  ${mDot(120,88,'#2C6C97','')}${mHome(308,230)}</svg>`;}
 function product(n,p){return `<div class="card card-p" style="cursor:pointer" data-toast="Added ${n} to cart">
   <div style="aspect-ratio:4/3;background:var(--surface-2);border:1px solid var(--line-2);border-radius:12px;display:grid;place-items:center;margin-bottom:12px;color:var(--muted-2)">${ic('box')}</div>
   <b style="font-size:14.5px">${n}</b><div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px"><span style="font-weight:700;color:var(--primary)">${p}</span><button class="btn btn-soft btn-sm">${ic('plus')} Add</button></div></div>`}
@@ -1636,7 +1687,8 @@ const MODALS={
   accept:{t:'Accept this request?',b:`You'll be coordinated by our patient team for this visit. A confirmation and pre-auth hold will follow once approved.`,ok:'Accept request',okMsg:'Request accepted — coordinator notified'},
   coord:{t:'Coordinate booking',b:`<div class="field"><label>Assign provider</label><select class="select"><option>Dr. A. Kaur</option><option>Dr. M. Rossi</option></select></div><div class="field"><label>Confirm time</label><input class="input" value="Wed, 2:00 PM"></div><p class="muted" style="font-size:13px">Approving sends the patient a profile/card email and places the pre-authorization hold.</p>`,ok:'Approve & schedule',okMsg:'Booking approved & scheduled'},
   refer:{t:'New clinic referral',b:`<div class="field"><label>Patient</label><input class="input" placeholder="Search patient…"></div><div class="field"><label>Refer to clinic</label><select class="select"><option>Downtown Rehab Clinic (owned)</option><option>North York Wellness (owned)</option><option>Westside Physio (partner)</option></select></div><div class="field"><label>Reason</label><textarea class="input" rows="2" placeholder="Advanced treatment / imaging…"></textarea></div>`,ok:'Send referral',okMsg:'Referral sent to clinic'},
-  runpay:{t:'Run payroll',b:`This will calculate commissions for <b>86 providers</b> across <b>412 visits</b> and queue <b>$18,200</b> for escrow release. Continue?`,ok:'Run payroll',okMsg:'Payroll run queued'}
+  runpay:{t:'Run payroll',b:`This will calculate commissions for <b>86 providers</b> across <b>412 visits</b> and queue <b>$18,200</b> for escrow release. Continue?`,ok:'Run payroll',okMsg:'Payroll run queued'},
+  cancelappt:{t:'Cancel this appointment?',b:`This cancels your visit and releases the pre-authorization hold on your card. This can't be undone.`,ok:'Cancel appointment',okMsg:'Appointment cancelled'}
 };
 function showModal(key){
   const m=MODALS[key];if(!m)return;
@@ -1648,7 +1700,10 @@ function showModal(key){
 /* ---------------- Router / render ---------------- */
 const VIEWS={patient:PV,provider:RV,admin:AV};
 function crumbFor(role,view){
-  const item=NAV[role].items.find(i=>i.k===view);return item?item.t:'Home';
+  const item=NAV[role].items.find(i=>i.k===view);
+  if(item)return item.t;
+  const extra={apptdetail:'Appointment',track:'Track provider',onboard:'Onboarding',book:'Book a visit'};
+  return extra[view]||'Home';
 }
 function renderNav(){
   const cfg=NAV[state.role];
@@ -1741,10 +1796,11 @@ function logout(){
 
 /* ---------------- Global click handling ---------------- */
 document.addEventListener('click',e=>{
-  const t=e.target.closest('[data-enter],[data-view],[data-bstep],[data-ostep],[data-modal],[data-close],[data-modal-ok],[data-toast],[data-role],[data-thread],[data-msg-send],[data-switch-toggle],[data-home],[data-book-confirm],[data-onboard-done],[data-slot],[data-deliv],[data-multi],#topCTA,#bellBtn');
+  const t=e.target.closest('[data-enter],[data-view],[data-appt],[data-bstep],[data-ostep],[data-modal],[data-close],[data-modal-ok],[data-toast],[data-role],[data-thread],[data-msg-send],[data-switch-toggle],[data-home],[data-book-confirm],[data-onboard-done],[data-slot],[data-deliv],[data-multi],#topCTA,#bellBtn');
   if(!t)return showcaseClick(e);
   // notification panel toggle
   if(t.id==='bellBtn'){e.stopPropagation();el('notifPanel').classList.toggle('open');return}
+  if(t.hasAttribute('data-appt')){state.apptId=t.getAttribute('data-appt');go('apptdetail');return}
   if(t.hasAttribute('data-switch-toggle')){t.classList.toggle('on');t.setAttribute('aria-pressed',t.classList.contains('on'));return}
   if(t.hasAttribute('data-thread')){const s=MSG[state.role];s.active=t.getAttribute('data-thread');const th=s.threads.find(x=>x.id===s.active);if(th)th.unread=0;render();return}
   if(t.hasAttribute('data-msg-send'))return sendMessage();
